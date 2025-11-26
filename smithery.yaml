@@ -12,6 +12,9 @@ startCommand:
     required:
       - AXYS_API_HOST
       - MCP_KEY
+  testConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "d2f0a813-490b-40c4-b967-35058e3fc138"
   commandFunction: |-
     (config) => ({
       command: 'node',
