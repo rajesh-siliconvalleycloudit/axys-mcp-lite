@@ -1,5 +1,5 @@
 startCommand:
-  type: stdio
+  type: http
   configSchema:
     type: object
     properties:
@@ -15,9 +15,11 @@ startCommand:
   commandFunction: |-
     (config) => ({
       command: 'node',
-      args: ['dist/index.js'],
+      args: ['dist/smithery-index.js'],
       env: {
         AXYS_API_HOST: config.AXYS_API_HOST,
-        MCP_KEY: config.MCP_KEY
+        MCP_KEY: config.MCP_KEY,
+        PORT: '8000'
       }
     })
+  port: 8000

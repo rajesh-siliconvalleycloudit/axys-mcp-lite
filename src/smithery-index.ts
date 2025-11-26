@@ -1,21 +1,14 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   ErrorCode,
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
-import { z } from 'zod';
+import express, { Request, Response } from 'express';
 import { GptMcpClient } from './axys-client.js';
 import { GptSearchRequest } from './types.js';
-
-// Configuration schema for Smithery
-export const configSchema = z.object({
-  AXYS_API_HOST: z.string().describe("AXYS API host URL (e.g., https://api.axys.com)"),
-  MCP_KEY: z.string().describe("MCP API key for AI-powered search")
-});
-
-export type Config = z.infer<typeof configSchema>;
 
 // Define MCP AI tools
 const TOOLS = [
@@ -83,20 +76,8 @@ function logToolResult(toolName: string, success: boolean, error?: string) {
   }
 }
 
-// Export the createServer function required by Smithery
-export default function createServer(config: Config) {
-  // Validate required configuration
-  if (!config.AXYS_API_HOST || !config.MCP_KEY) {
-    throw new Error("Missing required configuration: AXYS_API_HOST and MCP_KEY are required");
-  }
-
-  // Initialize MCP client
-  const mcpClient = new GptMcpClient({
-    host: config.AXYS_API_HOST,
-    mcpKey: config.MCP_KEY
-  });
-
-  // Create the MCP server instance
+// Create the MCP server with handlers
+function createMcpServer(mcpClient: GptMcpClient) {
   const server = new Server(
     {
       name: "axys-mcp-lite",
@@ -228,3 +209,86 @@ export default function createServer(config: Config) {
 
   return server;
 }
+
+// Main function to start the HTTP server
+async function main() {
+  const API_HOST = process.env.AXYS_API_HOST;
+  const MCP_KEY = process.env.MCP_KEY;
+  const PORT = parseInt(process.env.PORT || '8000', 10);
+
+  if (!API_HOST || !MCP_KEY) {
+    console.error("Error: Missing required environment variables AXYS_API_HOST or MCP_KEY");
+    process.exit(1);
+  }
+
+  // Initialize MCP client
+  const mcpClient = new GptMcpClient({
+    host: API_HOST,
+    mcpKey: MCP_KEY
+  });
+
+  // Validate MCP connection
+  console.error("Validating MCP API connection...");
+  const isConnected = await mcpClient.validateConnection();
+
+  if (!isConnected) {
+    console.error("Warning: Could not validate MCP API connection. Please check your MCP_KEY.");
+  } else {
+    console.error("Successfully connected to MCP API");
+  }
+
+  const app = express();
+
+  // Store active transports by session ID
+  const transports = new Map<string, SSEServerTransport>();
+
+  // Health check endpoint
+  app.get('/health', (_req: Request, res: Response) => {
+    res.json({ status: 'ok' });
+  });
+
+  // SSE endpoint for MCP communication
+  app.get('/sse', async (req: Request, res: Response) => {
+    console.error('New SSE connection established');
+
+    const transport = new SSEServerTransport('/messages', res);
+    const server = createMcpServer(mcpClient);
+
+    // Store transport with a unique ID
+    const sessionId = Math.random().toString(36).substring(7);
+    transports.set(sessionId, transport);
+
+    // Clean up on connection close
+    res.on('close', () => {
+      console.error('SSE connection closed');
+      transports.delete(sessionId);
+    });
+
+    await server.connect(transport);
+  });
+
+  // Message endpoint for client-to-server communication
+  app.post('/messages', express.json(), async (req: Request, res: Response) => {
+    // Find the transport for this session (simplified - in production use session tracking)
+    const transportsArray = Array.from(transports.values());
+    if (transportsArray.length > 0) {
+      const transport = transportsArray[transportsArray.length - 1];
+      await transport.handlePostMessage(req, res);
+    } else {
+      res.status(400).json({ error: 'No active SSE connection' });
+    }
+  });
+
+  app.listen(PORT, () => {
+    console.error(`MCP Server is running on HTTP port ${PORT}`);
+    console.error(`Connected to: ${API_HOST}`);
+    console.error(`Total tools available: ${TOOLS.length}`);
+    console.error(`SSE endpoint: http://localhost:${PORT}/sse`);
+    console.error(`Messages endpoint: http://localhost:${PORT}/messages`);
+  });
+}
+
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
