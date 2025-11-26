@@ -1,5 +1,8 @@
 startCommand:
   type: http
+  testConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "d2f0a813-490b-40c4-b967-35058e3fc138"
   configSchema:
     type: object
     properties:
@@ -15,7 +18,7 @@ startCommand:
   commandFunction: |-
     (config) => ({
       command: 'node',
-      args: ['dist/smithery-index.js'],
+      args: ['dist/index.js'],
       env: {
         AXYS_API_HOST: config.AXYS_API_HOST,
         MCP_KEY: config.MCP_KEY,

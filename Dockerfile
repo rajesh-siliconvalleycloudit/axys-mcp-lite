@@ -24,5 +24,5 @@ ENV NODE_ENV=production
 # Expose the HTTP port
 EXPOSE 8000
 
-# Run the MCP server (smithery-index.js for HTTP transport)
-CMD ["node", "dist/smithery-index.js"]
+# Run the MCP server
+CMD ["node", "dist/index.js"]
