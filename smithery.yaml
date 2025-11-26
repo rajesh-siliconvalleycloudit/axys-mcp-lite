@@ -2,7 +2,7 @@ startCommand:
   type: http
   testConfig:
     AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "d2f0a813-490b-40c4-b967-35058e3fc138"
+    MCP_KEY: "check"
   configSchema:
     type: object
     properties:
