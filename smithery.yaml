@@ -1,0 +1,23 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      AXYS_API_HOST:
+        type: string
+        description: "AXYS API host URL"
+      MCP_KEY:
+        type: string
+        description: "MCP API key for authentication"
+    required:
+      - AXYS_API_HOST
+      - MCP_KEY
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        AXYS_API_HOST: config.AXYS_API_HOST,
+        MCP_KEY: config.MCP_KEY
+      }
+    })

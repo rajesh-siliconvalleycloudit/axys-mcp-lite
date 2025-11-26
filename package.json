@@ -1,0 +1,65 @@
+{
+  "name": "axys-mcp-lite",
+  "version": "1.0.0",
+  "description": "Model Context Protocol (MCP) server for AXYS API integration with AI-powered search capabilities. Enables AI assistants to search, filter, and navigate AXYS data through natural language commands.",
+  "main": "dist/index.js",
+  "module": "src/smithery-index.ts",
+  "type": "module",
+  "bin": {
+    "axys-mcp-lite": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "axys",
+    "api",
+    "claude",
+    "ai",
+    "search",
+    "data-integration",
+    "gpt",
+    "ai-search",
+    "natural-language",
+    "structured-search",
+    "unstructured-search",
+    "document-search"
+  ],
+  "author": "AXYS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite/issues"
+  },
+  "homepage": "https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.9.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "@smithery/cli": "^1.4.6"
+  }
+}
