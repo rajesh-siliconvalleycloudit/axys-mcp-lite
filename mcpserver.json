@@ -1,0 +1,80 @@
+{
+  "name": "axys-mcp-lite",
+  "description": "Model Context Protocol (MCP) server for AXYS API integration with AI-powered search capabilities. Enables AI assistants to search, filter, and navigate AXYS data through natural language commands.",
+  "version": "1.0.0",
+  "author": "AXYS",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite.git"
+  },
+  "homepage": "https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite",
+  "documentation": "https://github.com/rajesh-siliconvalleycloudit/axys-mcp-lite#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "axys",
+    "api",
+    "claude",
+    "ai",
+    "search",
+    "data-integration",
+    "gpt",
+    "ai-search",
+    "natural-language",
+    "structured-search",
+    "unstructured-search",
+    "document-search"
+  ],
+  "tools": [
+    {
+      "name": "ai_search_structured",
+      "description": "Search structured data sources using natural language. Find data in tables, databases, and structured formats by simply describing what you're looking for.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural language query to search structured data (e.g., 'Find all users in engineering department')"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "ai_search_unstructured",
+      "description": "Search documents, videos, and files using natural language. Find information in unstructured content like PDFs, videos, and text files.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural language query to search documents and videos (e.g., 'How to install AXYS?')"
+          },
+          "searchIndices": {
+            "type": "string",
+            "description": "Optional: Specific index to search (e.g., 'video', 'document')"
+          },
+          "fileOnly": {
+            "type": "boolean",
+            "description": "Optional: Return only file references without content"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "validate_connection",
+      "description": "Validate the connection to the AXYS MCP API. Tests connectivity and authentication to ensure the server is properly configured.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  "installation": {
+    "method": "npm",
+    "package": "axys-mcp-lite",
+    "command": "npx axys-mcp-lite"
+  }
+}
