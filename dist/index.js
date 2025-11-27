@@ -28,18 +28,32 @@ function getMcpClient(config) {
     // Fall back to default client (from env vars)
     return defaultMcpClient;
 }
-// Parse config from query parameter
+// Parse config from query parameters (Smithery passes config as URL params)
 function parseConfigFromQuery(req) {
+    // Log all query params for debugging
+    console.error(`Query params received: ${JSON.stringify(req.query)}`);
+    // Method 1: Direct query params (Smithery HTTP format)
+    // e.g., ?AXYS_API_HOST=xxx&MCP_KEY=yyy
+    if (req.query.MCP_KEY || req.query.AXYS_API_HOST) {
+        const config = {
+            AXYS_API_HOST: req.query.AXYS_API_HOST,
+            MCP_KEY: req.query.MCP_KEY
+        };
+        console.error(`Parsed config from direct query params: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+        return config;
+    }
+    // Method 2: JSON config param (fallback)
+    // e.g., ?config={"AXYS_API_HOST":"xxx","MCP_KEY":"yyy"}
     const configParam = req.query.config;
     if (configParam && typeof configParam === 'string') {
         try {
             const decoded = decodeURIComponent(configParam);
             const config = JSON.parse(decoded);
-            console.error(`Parsed config from query: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+            console.error(`Parsed config from JSON query param: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
             return config;
         }
         catch (e) {
-            console.error(`Failed to parse config from query: ${e}`);
+            console.error(`Failed to parse JSON config from query: ${e}`);
         }
     }
     return undefined;
