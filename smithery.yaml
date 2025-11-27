@@ -6,11 +6,11 @@ startCommand:
       AXYS_API_HOST:
         type: string
         description: "AXYS API host URL (e.g., https://directory.axys.ai)"
-        default: "https://directory.axys.ai"
       MCP_KEY:
         type: string
         description: "MCP API key for authentication (obtain from AXYS admin)"
     required:
+      - AXYS_API_HOST
       - MCP_KEY
   port: 8000
   path: /mcp
