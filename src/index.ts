@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import 'dotenv/config';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
@@ -13,20 +14,8 @@ import { randomUUID } from 'node:crypto';
 import { GptMcpClient } from './axys-client.js';
 import { GptSearchRequest } from './types.js';
 
-// Get environment variables with defaults for container startup
-const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
-const MCP_KEY = process.env.MCP_KEY || '';
-const PORT = parseInt(process.env.PORT || '8000', 10);
-
-// Initialize MCP client (will be null if no MCP_KEY)
+// MCP client instance (initialized in main)
 let mcpClient: GptMcpClient | null = null;
-
-if (MCP_KEY) {
-  mcpClient = new GptMcpClient({
-    host: API_HOST,
-    mcpKey: MCP_KEY
-  });
-}
 
 // Define MCP AI tools
 const TOOLS = [
@@ -254,10 +243,26 @@ function createMcpServer() {
 
 // Main function to start the HTTP server
 async function main() {
+  // Get environment variables at runtime (after Smithery sets them)
+  const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
+  const MCP_KEY = process.env.MCP_KEY || '';
+  const PORT = parseInt(process.env.PORT || '8000', 10);
+
   console.error(`Starting MCP Server...`);
   console.error(`API_HOST: ${API_HOST}`);
   console.error(`MCP_KEY: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
   console.error(`PORT: ${PORT}`);
+
+  // Initialize MCP client
+  if (MCP_KEY) {
+    mcpClient = new GptMcpClient({
+      host: API_HOST,
+      mcpKey: MCP_KEY
+    });
+    console.error(`MCP client initialized successfully`);
+  } else {
+    console.error(`Warning: MCP_KEY not set, client not initialized`);
+  }
 
   const app = express();
   app.use(express.json());
