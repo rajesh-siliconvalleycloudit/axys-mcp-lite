@@ -12,15 +12,5 @@ startCommand:
     required:
       - AXYS_API_HOST
       - MCP_KEY
-  commandFunction: |-
-    (config) => ({
-      command: 'node',
-      args: ['dist/index.js'],
-      env: {
-        AXYS_API_HOST: config.AXYS_API_HOST,
-        MCP_KEY: config.MCP_KEY,
-        PORT: '8000'
-      }
-    })
   port: 8000
   path: /mcp
