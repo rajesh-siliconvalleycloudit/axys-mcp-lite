@@ -6,8 +6,44 @@ import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError, isI
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { GptMcpClient } from './axys-client.js';
-// MCP client instance (initialized in main)
-let mcpClient = null;
+// Store MCP clients by config hash to reuse connections
+const mcpClients = new Map();
+// Default MCP client (from env vars, for local development)
+let defaultMcpClient = null;
+// Helper to get or create MCP client for a config
+function getMcpClient(config) {
+    // If config provided (from Smithery query param), use it
+    if (config && config.MCP_KEY) {
+        const apiHost = config.AXYS_API_HOST || 'https://directory.axys.ai';
+        const configKey = `${apiHost}:${config.MCP_KEY}`;
+        if (!mcpClients.has(configKey)) {
+            console.error(`Creating new MCP client for config`);
+            mcpClients.set(configKey, new GptMcpClient({
+                host: apiHost,
+                mcpKey: config.MCP_KEY
+            }));
+        }
+        return mcpClients.get(configKey);
+    }
+    // Fall back to default client (from env vars)
+    return defaultMcpClient;
+}
+// Parse config from query parameter
+function parseConfigFromQuery(req) {
+    const configParam = req.query.config;
+    if (configParam && typeof configParam === 'string') {
+        try {
+            const decoded = decodeURIComponent(configParam);
+            const config = JSON.parse(decoded);
+            console.error(`Parsed config from query: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+            return config;
+        }
+        catch (e) {
+            console.error(`Failed to parse config from query: ${e}`);
+        }
+    }
+    return undefined;
+}
 // Define MCP AI tools
 const TOOLS = [
     {
@@ -73,7 +109,9 @@ function logToolResult(toolName, success, error) {
     }
 }
 // Create the MCP server with handlers
-function createMcpServer() {
+function createMcpServer(config) {
+    // Get the MCP client for this config
+    const mcpClient = getMcpClient(config);
     const server = new Server({
         name: "axys-mcp-lite",
         version: "1.0.0",
@@ -199,24 +237,24 @@ function createMcpServer() {
 }
 // Main function to start the HTTP server
 async function main() {
-    // Get environment variables at runtime (after Smithery sets them)
+    // Get environment variables at runtime (for local development)
     const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
     const MCP_KEY = process.env.MCP_KEY || '';
     const PORT = parseInt(process.env.PORT || '8000', 10);
     console.error(`Starting MCP Server...`);
     console.error(`API_HOST: ${API_HOST}`);
-    console.error(`MCP_KEY: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+    console.error(`MCP_KEY from env: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
     console.error(`PORT: ${PORT}`);
-    // Initialize MCP client
+    // Initialize default MCP client from env vars (for local development)
     if (MCP_KEY) {
-        mcpClient = new GptMcpClient({
+        defaultMcpClient = new GptMcpClient({
             host: API_HOST,
             mcpKey: MCP_KEY
         });
-        console.error(`MCP client initialized successfully`);
+        console.error(`Default MCP client initialized from env vars`);
     }
     else {
-        console.error(`Warning: MCP_KEY not set, client not initialized`);
+        console.error(`No MCP_KEY in env - will use config from query params (Smithery mode)`);
     }
     const app = express();
     app.use(express.json());
@@ -229,7 +267,9 @@ async function main() {
     // MCP endpoint - handles POST requests
     app.post('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
-        console.error(`Received MCP POST request, session: ${sessionId || 'new'}`);
+        // Parse config from query parameter (Smithery passes config this way)
+        const config = parseConfigFromQuery(req);
+        console.error(`Received MCP POST request, session: ${sessionId || 'new'}, config: ${config ? 'provided' : 'none'}`);
         try {
             let transport;
             if (sessionId && transports[sessionId]) {
@@ -253,8 +293,8 @@ async function main() {
                         delete transports[sid];
                     }
                 };
-                // Connect transport to MCP server
-                const server = createMcpServer();
+                // Connect transport to MCP server with config from query params
+                const server = createMcpServer(config);
                 await server.connect(transport);
             }
             else {
