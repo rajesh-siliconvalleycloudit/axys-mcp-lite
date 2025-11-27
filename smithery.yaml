@@ -1,3 +1,9 @@
+name: axys-mcp-lite
+displayName: AXYS MCP Lite Server
+description: Search structured databases and unstructured content using natural language. Find relevant answers across PDFs, documents, images, and videos with semantic relevance. Get precise, organized outputs for reporting, research, and support tasks.
+version: 1.0.0
+license: MIT
+
 startCommand:
   type: http
   configSchema:
