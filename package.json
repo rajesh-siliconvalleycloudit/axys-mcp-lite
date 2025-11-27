@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Model Context Protocol (MCP) server for AXYS API integration with AI-powered search capabilities. Enables AI assistants to search, filter, and navigate AXYS data through natural language commands.",
   "main": "dist/index.js",
-  "module": "src/smithery-index.ts",
   "type": "module",
   "bin": {
     "axys-mcp-lite": "./dist/index.js"
