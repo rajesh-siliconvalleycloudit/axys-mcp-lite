@@ -18,6 +18,3 @@ startCommand:
         title: MCP Key
         description: MCP API key for authentication
         x-required: true
-  exampleConfig:
-    AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "your-mcp-key-here"
