@@ -1,11 +1,8 @@
-name: axys-mcp-lite
-displayName: AXYS MCP Lite Server
-description: Search structured databases and unstructured content using natural language. Find relevant answers across PDFs, documents, images, and videos with semantic relevance. Get precise, organized outputs for reporting, research, and support tasks.
-version: 1.0.0
-license: MIT
-
 startCommand:
   type: http
+  testConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "check"
   configSchema:
     type: object
     properties:
@@ -18,5 +15,15 @@ startCommand:
     required:
       - AXYS_API_HOST
       - MCP_KEY
+  commandFunction: |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: {
+        AXYS_API_HOST: config.AXYS_API_HOST,
+        MCP_KEY: config.MCP_KEY,
+        PORT: '8000'
+      }
+    })
   port: 8000
   path: /mcp
