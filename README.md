@@ -2,6 +2,7 @@
 
 A Model Context Protocol (MCP) server that provides AI-powered search capabilities, enabling AI assistants like Claude to search through structured and unstructured data using natural language commands.
 
+[![smithery badge](https://smithery.ai/badge/@rajesh-siliconvalleycloudit/axys-mcp-lite)](https://smithery.ai/server/@rajesh-siliconvalleycloudit/axys-mcp-lite)
 [![npm version](https://badge.fury.io/js/axys-mcp-lite.svg)](https://www.npmjs.com/package/axys-mcp-lite)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
