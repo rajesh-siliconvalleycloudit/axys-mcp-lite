@@ -430,6 +430,10 @@ async function startHttpServer() {
           "title": "MCP Key",
           "description": "MCP API key for authentication (obtain from AXYS admin)",
           "x-user-input-required": true
+        },
+        "x-test-config": {
+          "AXYS_API_HOST": "https://directory.axys.ai",
+          "MCP_KEY": "test-key-12345"
         }
       }
     });
