@@ -2,6 +2,9 @@ startCommand:
   type: http
   port: 8000
   path: /mcp
+  testConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "test-key-12345"
   configSchema:
     type: object
     required:

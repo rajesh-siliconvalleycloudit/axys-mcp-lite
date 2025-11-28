@@ -376,6 +376,13 @@ async function startHttpServer() {
                 message: 'AXYS_API_HOST and MCP_KEY must be provided'
             });
         }
+        // Accept any non-empty values for testing
+        if (!AXYS_API_HOST || !MCP_KEY) {
+            return res.status(400).json({
+                error: 'Invalid configuration',
+                message: 'AXYS_API_HOST and MCP_KEY are required'
+            });
+        }
         // Parse config from query parameter (Smithery passes config this way)
         const config = parseConfigFromQuery(req);
         console.error(`Received MCP POST request, session: ${sessionId || 'new'}, config: ${config ? 'provided' : 'none'}`);
