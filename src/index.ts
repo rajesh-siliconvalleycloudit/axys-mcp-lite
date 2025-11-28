@@ -15,6 +15,9 @@ import { randomUUID } from 'node:crypto';
 import { GptMcpClient } from './axys-client.js';
 import { GptSearchRequest } from './types.js';
 
+// Default API host - used when not provided or invalid
+const DEFAULT_API_HOST = 'https://directory.axys.ai';
+
 // Check if running in stdio mode (for Smithery)
 // Smithery sets this when using commandFunction, or detect if stdin is not a TTY
 const STDIO_MODE = process.env.MCP_TRANSPORT === 'stdio' ||
@@ -24,6 +27,17 @@ const STDIO_MODE = process.env.MCP_TRANSPORT === 'stdio' ||
 interface SmitheryConfig {
   AXYS_API_HOST?: string;
   MCP_KEY?: string;
+}
+
+// Check if a value is a valid URL (not a dummy placeholder like "string")
+function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    new URL(url);
+    return url.startsWith('http://') || url.startsWith('https://');
+  } catch {
+    return false;
+  }
 }
 
 // Store MCP clients by config hash to reuse connections
@@ -36,11 +50,12 @@ let defaultMcpClient: GptMcpClient | null = null;
 function getMcpClient(config?: SmitheryConfig): GptMcpClient | null {
   // If config provided (from Smithery query param), use it
   if (config && config.MCP_KEY) {
-    const apiHost = config.AXYS_API_HOST || 'https://directory.axys.ai';
+    // Use default API host if the provided one is invalid (e.g., "string" from Smithery scanner)
+    const apiHost = isValidUrl(config.AXYS_API_HOST) ? config.AXYS_API_HOST! : DEFAULT_API_HOST;
     const configKey = `${apiHost}:${config.MCP_KEY}`;
 
     if (!mcpClients.has(configKey)) {
-      console.error(`Creating new MCP client for config`);
+      console.error(`Creating new MCP client for config (host: ${apiHost})`);
       mcpClients.set(configKey, new GptMcpClient({
         host: apiHost,
         mcpKey: config.MCP_KEY
@@ -315,11 +330,13 @@ function createMcpServer(config?: SmitheryConfig) {
 
 // Start server in stdio mode (for Smithery)
 async function startStdioServer() {
-  const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
+  const envApiHost = process.env.AXYS_API_HOST;
+  // Use default if env var is not a valid URL (e.g., "string" from Smithery scanner)
+  const API_HOST = isValidUrl(envApiHost) ? envApiHost! : DEFAULT_API_HOST;
   const MCP_KEY = process.env.MCP_KEY;
 
   console.error(`Starting MCP Server in STDIO mode...`);
-  console.error(`API_HOST: ${API_HOST}`);
+  console.error(`API_HOST: ${API_HOST} (env was: ${envApiHost})`);
   console.error(`MCP_KEY: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
 
   if (!MCP_KEY) {
@@ -333,13 +350,17 @@ async function startStdioServer() {
     mcpKey: MCP_KEY
   });
 
-  // Validate connection
+  // Validate connection (don't fail if it doesn't work - might be dummy credentials from scanner)
   console.error("Validating MCP API connection...");
-  const isConnected = await defaultMcpClient.validateConnection();
-  if (!isConnected) {
-    console.error("Warning: Could not validate MCP API connection.");
-  } else {
-    console.error("Successfully connected to MCP API");
+  try {
+    const isConnected = await defaultMcpClient.validateConnection();
+    if (!isConnected) {
+      console.error("Warning: Could not validate MCP API connection.");
+    } else {
+      console.error("Successfully connected to MCP API");
+    }
+  } catch (error) {
+    console.error("Warning: Connection validation failed:", error);
   }
 
   // Create server and connect via stdio
@@ -352,12 +373,14 @@ async function startStdioServer() {
 
 // Start server in HTTP mode
 async function startHttpServer() {
-  const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
+  const envApiHost = process.env.AXYS_API_HOST;
+  // Use default if env var is not a valid URL (e.g., "string" from Smithery scanner)
+  const API_HOST = isValidUrl(envApiHost) ? envApiHost! : DEFAULT_API_HOST;
   const MCP_KEY = process.env.MCP_KEY || '';
   const PORT = parseInt(process.env.PORT || '8000', 10);
 
   console.error(`Starting MCP Server in HTTP mode...`);
-  console.error(`API_HOST: ${API_HOST}`);
+  console.error(`API_HOST: ${API_HOST} (env was: ${envApiHost})`);
   console.error(`MCP_KEY from env: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
   console.error(`PORT: ${PORT}`);
 
