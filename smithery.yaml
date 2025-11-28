@@ -2,9 +2,7 @@ startCommand:
   type: http
   port: 8000
   path: /mcp
-  testConfig:
-    AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "check"
+  userInputRequired: true
   configSchema:
     type: object
     required:
@@ -19,13 +17,6 @@ startCommand:
         type: string
         title: MCP Key
         description: MCP API key for authentication
-  commandFunction: |
-    (config) => ({
-      command: 'node',
-      args: ['dist/index.js'],
-      env: {
-        AXYS_API_HOST: config.AXYS_API_HOST,
-        MCP_KEY: config.MCP_KEY,
-        PORT: '8000'
-      }
-    })
+  exampleConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "your-mcp-key-here"
