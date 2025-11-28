@@ -422,7 +422,8 @@ async function startHttpServer() {
         "AXYS_API_HOST": {
           "type": "string",
           "title": "AXYS API Host",
-          "description": "AXYS API host URL (e.g., https://directory.axys.ai)"
+          "description": "AXYS API host URL (e.g., https://directory.axys.ai)",
+          "x-user-input-required": true
         },
         "MCP_KEY": {
           "type": "string",
