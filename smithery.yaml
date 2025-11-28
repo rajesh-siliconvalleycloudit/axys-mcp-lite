@@ -10,9 +10,7 @@ startCommand:
     MCP_KEY: "your-mcp-key-here"
   configSchema:
     type: object
-    required:
-      - AXYS_API_HOST
-      - MCP_KEY
+    required: ["AXYS_API_HOST", "MCP_KEY"]
     properties:
       AXYS_API_HOST:
         type: string

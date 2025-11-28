@@ -194,7 +194,7 @@ function createMcpServer(config?: SmitheryConfig) {
   });
 
   // Handle tool execution
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request: any) => {
     const { name, arguments: args } = request.params;
 
     // Log the incoming tool call
@@ -425,7 +425,7 @@ async function startHttpServer() {
         // New initialization request - create new transport
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (newSessionId) => {
+          onsessioninitialized: (newSessionId: string) => {
             console.error(`Session initialized: ${newSessionId}`);
             transports[newSessionId] = transport;
           }
