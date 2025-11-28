@@ -8,13 +8,13 @@ startCommand:
     properties:
       AXYS_API_HOST:
         type: string
-        title: "AXYS API Host"
-        description: "AXYS API host URL"
+        title: AXYS API Host
+        description: AXYS API host URL
       MCP_KEY:
         type: string
-        title: "MCP Key"
-        description: "MCP API key for authentication (obtain from AXYS admin)"
-  commandFunction: |-
+        title: MCP Key
+        description: MCP API key for authentication
+  commandFunction: |
     (config) => ({
       command: 'node',
       args: ['dist/index.js'],
@@ -25,5 +25,5 @@ startCommand:
       }
     })
   exampleConfig:
-    AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "your-mcp-key-here"
+    AXYS_API_HOST: https://directory.axys.ai
+    MCP_KEY: your-mcp-key-here
