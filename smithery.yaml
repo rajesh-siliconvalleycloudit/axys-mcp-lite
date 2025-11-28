@@ -1,5 +1,8 @@
 startCommand:
   type: stdio
+  testConfig:
+    AXYS_API_HOST: "https://directory.axys.ai"
+    MCP_KEY: "check"
   configSchema:
     type: object
     required:
@@ -24,6 +27,3 @@ startCommand:
         MCP_TRANSPORT: 'stdio'
       }
     })
-  exampleConfig:
-    AXYS_API_HOST: https://directory.axys.ai
-    MCP_KEY: your-mcp-key-here
