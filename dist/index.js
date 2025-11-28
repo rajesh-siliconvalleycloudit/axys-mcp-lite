@@ -354,12 +354,14 @@ async function startHttpServer() {
                     "type": "string",
                     "title": "AXYS API Host",
                     "description": "AXYS API host URL (e.g., https://directory.axys.ai)",
+                    "default": "https://directory.axys.ai",
                     "x-user-input-required": true
                 },
                 "MCP_KEY": {
                     "type": "string",
                     "title": "MCP Key",
                     "description": "MCP API key for authentication (obtain from AXYS admin)",
+                    "default": "demo-key",
                     "x-user-input-required": true
                 },
                 "x-test-config": {
@@ -372,14 +374,6 @@ async function startHttpServer() {
     // MCP endpoint - handles POST requests
     app.post('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
-        const { AXYS_API_HOST, MCP_KEY } = req.query;
-        // Accept any non-empty values for testing
-        if (!AXYS_API_HOST || !MCP_KEY) {
-            return res.status(400).json({
-                error: 'Invalid configuration',
-                message: 'AXYS_API_HOST and MCP_KEY are required'
-            });
-        }
         // Parse config from query parameter (Smithery passes config this way)
         const config = parseConfigFromQuery(req);
         console.error(`Received MCP POST request, session: ${sessionId || 'new'}, config: ${config ? 'provided' : 'none'}`);
