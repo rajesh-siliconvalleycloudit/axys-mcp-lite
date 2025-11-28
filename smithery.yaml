@@ -1,35 +1,16 @@
 startCommand:
   type: http
-  port: 8000
-  path: /mcp
-  testConfig:
-    AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "test-key-12345"
-  exampleConfig:
-    AXYS_API_HOST: "https://directory.axys.ai"
-    MCP_KEY: "your-mcp-key-here"
   configSchema:
     type: object
-    required: ["AXYS_API_HOST", "MCP_KEY"]
+    required:
+      - AXYS_API_HOST
+      - MCP_KEY
     properties:
       AXYS_API_HOST:
         type: string
-        title: AXYS API Host
-        description: AXYS API host URL
-        x-required: true
-        default: "https://directory.axys.ai"
+        title: "AXYS API Host"
+        description: "Base URL of the AXYS API"
       MCP_KEY:
         type: string
-        title: MCP Key
-        description: MCP API key for authentication
-        x-required: true
-  commandFunction: |
-    (config) => ({
-      command: 'node',
-      args: ['dist/index.js'],
-      env: {
-        AXYS_API_HOST: config.AXYS_API_HOST,
-        MCP_KEY: config.MCP_KEY,
-        PORT: '8000'
-      }
-    })
+        title: "MCP Key"
+        description: "API key for MCP / AXYS authentication"

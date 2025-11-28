@@ -12,18 +12,34 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
+import { z } from 'zod';
 import { GptMcpClient } from './axys-client.js';
 import { GptSearchRequest } from './types.js';
 
 // Default API host - used when not provided or invalid
 const DEFAULT_API_HOST = 'https://directory.axys.ai';
 
+// Export configSchema for Smithery to discover
+export const configSchema = z.object({
+  AXYS_API_HOST: z.string()
+    .url()
+    .default(DEFAULT_API_HOST)
+    .describe("AXYS API host URL"),
+  MCP_KEY: z.string()
+    .min(1)
+    .default("demo-key")
+    .describe("MCP API key for authentication (obtain from AXYS admin)")
+});
+
+// Infer the config type from the schema
+type Config = z.infer<typeof configSchema>;
+
 // Check if running in stdio mode (for Smithery)
 // Smithery sets this when using commandFunction, or detect if stdin is not a TTY
 const STDIO_MODE = process.env.MCP_TRANSPORT === 'stdio' ||
                    (process.env.MCP_KEY && !process.stdin.isTTY && !process.env.PORT);
 
-// Config interface for Smithery
+// Config interface for Smithery (keeping for backward compatibility)
 interface SmitheryConfig {
   AXYS_API_HOST?: string;
   MCP_KEY?: string;
