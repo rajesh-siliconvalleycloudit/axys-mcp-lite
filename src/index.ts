@@ -16,18 +16,13 @@ import { z } from 'zod';
 import { GptMcpClient } from './axys-client.js';
 import { GptSearchRequest } from './types.js';
 
-// Default API host - used when not provided or invalid
-const DEFAULT_API_HOST = 'https://directory.axys.ai';
+// Fixed API host
+const API_HOST = 'https://directory.axys.ai';
 
-// Export configSchema for Smithery to discover
+// Export configSchema for Smithery to discover - only MCP_KEY is configurable
 export const configSchema = z.object({
-  AXYS_API_HOST: z.string()
-    .url()
-    .default(DEFAULT_API_HOST)
-    .describe("AXYS API host URL"),
   MCP_KEY: z.string()
     .min(1)
-    .default("demo-key")
     .describe("MCP API key for authentication (obtain from AXYS admin)")
 });
 
@@ -39,21 +34,9 @@ type Config = z.infer<typeof configSchema>;
 const STDIO_MODE = process.env.MCP_TRANSPORT === 'stdio' ||
                    (process.env.MCP_KEY && !process.stdin.isTTY && !process.env.PORT);
 
-// Config interface for Smithery (keeping for backward compatibility)
+// Config interface for Smithery
 interface SmitheryConfig {
-  AXYS_API_HOST?: string;
   MCP_KEY?: string;
-}
-
-// Check if a value is a valid URL (not a dummy placeholder like "string")
-function isValidUrl(url: string | undefined): boolean {
-  if (!url) return false;
-  try {
-    new URL(url);
-    return url.startsWith('http://') || url.startsWith('https://');
-  } catch {
-    return false;
-  }
 }
 
 // Store MCP clients by config hash to reuse connections
@@ -66,14 +49,12 @@ let defaultMcpClient: GptMcpClient | null = null;
 function getMcpClient(config?: SmitheryConfig): GptMcpClient | null {
   // If config provided (from Smithery query param), use it
   if (config && config.MCP_KEY) {
-    // Use default API host if the provided one is invalid (e.g., "string" from Smithery scanner)
-    const apiHost = isValidUrl(config.AXYS_API_HOST) ? config.AXYS_API_HOST! : DEFAULT_API_HOST;
-    const configKey = `${apiHost}:${config.MCP_KEY}`;
+    const configKey = `${API_HOST}:${config.MCP_KEY}`;
 
     if (!mcpClients.has(configKey)) {
-      console.error(`Creating new MCP client for config (host: ${apiHost})`);
+      console.error(`Creating new MCP client for config (host: ${API_HOST})`);
       mcpClients.set(configKey, new GptMcpClient({
-        host: apiHost,
+        host: API_HOST,
         mcpKey: config.MCP_KEY
       }));
     }
@@ -90,24 +71,23 @@ function parseConfigFromQuery(req: Request): SmitheryConfig | undefined {
   console.error(`Query params received: ${JSON.stringify(req.query)}`);
 
   // Method 1: Direct query params (Smithery HTTP format)
-  // e.g., ?AXYS_API_HOST=xxx&MCP_KEY=yyy
-  if (req.query.MCP_KEY || req.query.AXYS_API_HOST) {
+  // e.g., ?MCP_KEY=yyy
+  if (req.query.MCP_KEY) {
     const config: SmitheryConfig = {
-      AXYS_API_HOST: req.query.AXYS_API_HOST as string,
       MCP_KEY: req.query.MCP_KEY as string
     };
-    console.error(`Parsed config from direct query params: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+    console.error(`Parsed config from direct query params: MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
     return config;
   }
 
   // Method 2: JSON config param (fallback)
-  // e.g., ?config={"AXYS_API_HOST":"xxx","MCP_KEY":"yyy"}
+  // e.g., ?config={"MCP_KEY":"yyy"}
   const configParam = req.query.config;
   if (configParam && typeof configParam === 'string') {
     try {
       const decoded = decodeURIComponent(configParam);
       const config = JSON.parse(decoded) as SmitheryConfig;
-      console.error(`Parsed config from JSON query param: AXYS_API_HOST=${config.AXYS_API_HOST}, MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+      console.error(`Parsed config from JSON query param: MCP_KEY=${config.MCP_KEY ? '[SET]' : '[NOT SET]'}`);
       return config;
     } catch (e) {
       console.error(`Failed to parse JSON config from query: ${e}`);
@@ -346,13 +326,10 @@ function createMcpServer(config?: SmitheryConfig) {
 
 // Start server in stdio mode (for Smithery)
 async function startStdioServer() {
-  const envApiHost = process.env.AXYS_API_HOST;
-  // Use default if env var is not a valid URL (e.g., "string" from Smithery scanner)
-  const API_HOST = isValidUrl(envApiHost) ? envApiHost! : DEFAULT_API_HOST;
   const MCP_KEY = process.env.MCP_KEY;
 
   console.error(`Starting MCP Server in STDIO mode...`);
-  console.error(`API_HOST: ${API_HOST} (env was: ${envApiHost})`);
+  console.error(`API_HOST: ${API_HOST}`);
   console.error(`MCP_KEY: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
 
   if (!MCP_KEY) {
@@ -389,14 +366,11 @@ async function startStdioServer() {
 
 // Start server in HTTP mode
 async function startHttpServer() {
-  const envApiHost = process.env.AXYS_API_HOST;
-  // Use default if env var is not a valid URL (e.g., "string" from Smithery scanner)
-  const API_HOST = isValidUrl(envApiHost) ? envApiHost! : DEFAULT_API_HOST;
   const MCP_KEY = process.env.MCP_KEY || '';
   const PORT = parseInt(process.env.PORT || '8000', 10);
 
   console.error(`Starting MCP Server in HTTP mode...`);
-  console.error(`API_HOST: ${API_HOST} (env was: ${envApiHost})`);
+  console.error(`API_HOST: ${API_HOST}`);
   console.error(`MCP_KEY from env: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
   console.error(`PORT: ${PORT}`);
 
