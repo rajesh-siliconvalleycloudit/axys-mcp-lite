@@ -177,23 +177,25 @@ async function main() {
     const API_HOST = process.env.AXYS_API_HOST;
     const MCP_KEY = process.env.MCP_KEY;
     const PORT = parseInt(process.env.PORT || '8000', 10);
-    if (!API_HOST || !MCP_KEY) {
-        console.error("Error: Missing required environment variables AXYS_API_HOST or MCP_KEY");
-        process.exit(1);
-    }
-    // Initialize MCP client
-    const mcpClient = new GptMcpClient({
-        host: API_HOST,
-        mcpKey: MCP_KEY
-    });
-    // Validate MCP connection
-    console.error("Validating MCP API connection...");
-    const isConnected = await mcpClient.validateConnection();
-    if (!isConnected) {
-        console.error("Warning: Could not validate MCP API connection. Please check your MCP_KEY.");
+    // For Smithery deployment, config comes via query params, so env vars are optional
+    if (API_HOST && MCP_KEY) {
+        // Initialize MCP client for validation if env vars are provided
+        const mcpClient = new GptMcpClient({
+            host: API_HOST,
+            mcpKey: MCP_KEY
+        });
+        // Validate MCP connection
+        console.error("Validating MCP API connection...");
+        const isConnected = await mcpClient.validateConnection();
+        if (!isConnected) {
+            console.error("Warning: Could not validate MCP API connection. Please check your MCP_KEY.");
+        }
+        else {
+            console.error("Successfully connected to MCP API");
+        }
     }
     else {
-        console.error("Successfully connected to MCP API");
+        console.error("No environment config found. Config will be read from query parameters (Smithery mode).");
     }
     const app = express();
     app.use(express.json());
@@ -203,11 +205,54 @@ async function main() {
     app.get('/health', (_req, res) => {
         res.json({ status: 'ok' });
     });
+    // Helper function to get config from query parameter or environment
+    function getConfig(req) {
+        // First try to get config from query parameter (Smithery passes it this way)
+        const configParam = req.query.config;
+        if (configParam) {
+            try {
+                const config = JSON.parse(configParam);
+                if (config.AXYS_API_HOST && config.MCP_KEY) {
+                    console.error('Using config from query parameter');
+                    return {
+                        apiHost: config.AXYS_API_HOST,
+                        mcpKey: config.MCP_KEY
+                    };
+                }
+            }
+            catch (e) {
+                console.error('Failed to parse config from query parameter:', e);
+            }
+        }
+        // Fall back to environment variables
+        const apiHost = process.env.AXYS_API_HOST;
+        const mcpKey = process.env.MCP_KEY;
+        if (apiHost && mcpKey) {
+            console.error('Using config from environment variables');
+            return { apiHost, mcpKey };
+        }
+        throw new Error('Missing required configuration: AXYS_API_HOST and MCP_KEY');
+    }
+    // Store MCP clients by config hash to reuse connections
+    const mcpClients = {};
+    function getMcpClient(apiHost, mcpKey) {
+        const configHash = `${apiHost}:${mcpKey}`;
+        if (!mcpClients[configHash]) {
+            mcpClients[configHash] = new GptMcpClient({
+                host: apiHost,
+                mcpKey: mcpKey
+            });
+        }
+        return mcpClients[configHash];
+    }
     // MCP endpoint - handles POST requests
     app.post('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
         console.error(`Received MCP POST request, session: ${sessionId || 'new'}`);
         try {
+            // Get config from query parameter or environment
+            const config = getConfig(req);
+            const sessionMcpClient = getMcpClient(config.apiHost, config.mcpKey);
             let transport;
             if (sessionId && transports[sessionId]) {
                 // Reuse existing transport
@@ -231,7 +276,7 @@ async function main() {
                     }
                 };
                 // Connect transport to MCP server
-                const server = createMcpServer(mcpClient);
+                const server = createMcpServer(sessionMcpClient);
                 await server.connect(transport);
             }
             else {
