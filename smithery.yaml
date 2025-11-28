@@ -1,7 +1,7 @@
 startCommand:
-  type: stdio
-  setup:
-    - run: npm install
+  type: http
+  port: 8000
+  path: /mcp
   testConfig:
     AXYS_API_HOST: "https://directory.axys.ai"
     MCP_KEY: "check"
@@ -26,6 +26,6 @@ startCommand:
       env: {
         AXYS_API_HOST: config.AXYS_API_HOST,
         MCP_KEY: config.MCP_KEY,
-        MCP_TRANSPORT: 'stdio'
+        PORT: '8000'
       }
     })
