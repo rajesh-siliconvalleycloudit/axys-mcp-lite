@@ -337,40 +337,6 @@ async function startHttpServer() {
     app.get('/health', (_req, res) => {
         res.json({ status: 'ok' });
     });
-    // Well-known endpoint for Smithery to discover config schema
-    // This tells Smithery what credentials are required and triggers the credential prompt
-    app.get('/.well-known/mcp-config', (_req, res) => {
-        res.json({
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "$id": "/.well-known/mcp-config",
-            "title": "MCP Session Configuration",
-            "description": "Configuration for AXYS MCP Server",
-            "x-query-style": "dot+bracket",
-            "x-user-input-required": true,
-            "type": "object",
-            "required": ["AXYS_API_HOST", "MCP_KEY"],
-            "properties": {
-                "AXYS_API_HOST": {
-                    "type": "string",
-                    "title": "AXYS API Host",
-                    "description": "AXYS API host URL (e.g., https://directory.axys.ai)",
-                    "default": "https://directory.axys.ai",
-                    "x-user-input-required": true
-                },
-                "MCP_KEY": {
-                    "type": "string",
-                    "title": "MCP Key",
-                    "description": "MCP API key for authentication (obtain from AXYS admin)",
-                    "default": "demo-key",
-                    "x-user-input-required": true
-                },
-                "x-test-config": {
-                    "AXYS_API_HOST": "https://directory.axys.ai",
-                    "MCP_KEY": "test-key-12345"
-                }
-            }
-        });
-    });
     // MCP endpoint - handles POST requests
     app.post('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
