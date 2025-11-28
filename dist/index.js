@@ -369,13 +369,6 @@ async function startHttpServer() {
     app.post('/mcp', async (req, res) => {
         const sessionId = req.headers['mcp-session-id'];
         const { AXYS_API_HOST, MCP_KEY } = req.query;
-        // Reject dummy/placeholder values
-        if (AXYS_API_HOST === 'string' || MCP_KEY === 'string') {
-            return res.status(400).json({
-                error: 'Invalid configuration',
-                message: 'AXYS_API_HOST and MCP_KEY must be provided'
-            });
-        }
         // Accept any non-empty values for testing
         if (!AXYS_API_HOST || !MCP_KEY) {
             return res.status(400).json({
