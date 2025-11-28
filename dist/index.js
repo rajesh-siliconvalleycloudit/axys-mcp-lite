@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 import 'dotenv/config';
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, ErrorCode, McpError, isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { GptMcpClient } from './axys-client.js';
+// Check if running in stdio mode (for Smithery)
+// Smithery sets this when using commandFunction, or detect if stdin is not a TTY
+const STDIO_MODE = process.env.MCP_TRANSPORT === 'stdio' ||
+    (process.env.MCP_KEY && !process.stdin.isTTY && !process.env.PORT);
 // Store MCP clients by config hash to reuse connections
 const mcpClients = new Map();
 // Default MCP client (from env vars, for local development)
@@ -249,13 +254,43 @@ function createMcpServer(config) {
     });
     return server;
 }
-// Main function to start the HTTP server
-async function main() {
-    // Get environment variables at runtime (for local development)
+// Start server in stdio mode (for Smithery)
+async function startStdioServer() {
+    const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
+    const MCP_KEY = process.env.MCP_KEY;
+    console.error(`Starting MCP Server in STDIO mode...`);
+    console.error(`API_HOST: ${API_HOST}`);
+    console.error(`MCP_KEY: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
+    if (!MCP_KEY) {
+        console.error("Error: MCP_KEY environment variable is required");
+        process.exit(1);
+    }
+    // Initialize MCP client from env vars (passed by Smithery commandFunction)
+    defaultMcpClient = new GptMcpClient({
+        host: API_HOST,
+        mcpKey: MCP_KEY
+    });
+    // Validate connection
+    console.error("Validating MCP API connection...");
+    const isConnected = await defaultMcpClient.validateConnection();
+    if (!isConnected) {
+        console.error("Warning: Could not validate MCP API connection.");
+    }
+    else {
+        console.error("Successfully connected to MCP API");
+    }
+    // Create server and connect via stdio
+    const server = createMcpServer();
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    console.error("MCP Server running on stdio");
+}
+// Start server in HTTP mode
+async function startHttpServer() {
     const API_HOST = process.env.AXYS_API_HOST || 'https://directory.axys.ai';
     const MCP_KEY = process.env.MCP_KEY || '';
     const PORT = parseInt(process.env.PORT || '8000', 10);
-    console.error(`Starting MCP Server...`);
+    console.error(`Starting MCP Server in HTTP mode...`);
     console.error(`API_HOST: ${API_HOST}`);
     console.error(`MCP_KEY from env: ${MCP_KEY ? '[SET]' : '[NOT SET]'}`);
     console.error(`PORT: ${PORT}`);
@@ -268,7 +303,7 @@ async function main() {
         console.error(`Default MCP client initialized from env vars`);
     }
     else {
-        console.error(`No MCP_KEY in env - will use config from query params (Smithery mode)`);
+        console.error(`No MCP_KEY in env - will use config from query params`);
     }
     const app = express();
     app.use(express.json());
@@ -383,6 +418,15 @@ async function main() {
         }
         process.exit(0);
     });
+}
+// Main entry point - choose mode based on environment
+async function main() {
+    if (STDIO_MODE) {
+        await startStdioServer();
+    }
+    else {
+        await startHttpServer();
+    }
 }
 main().catch((error) => {
     console.error("Fatal error:", error);
