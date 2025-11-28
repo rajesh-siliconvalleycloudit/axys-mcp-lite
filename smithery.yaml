@@ -1,5 +1,8 @@
 startCommand:
   type: stdio
+  setup:
+    - command: npm
+      args: [install]
   testConfig:
     AXYS_API_HOST: "https://directory.axys.ai"
     MCP_KEY: "check"
