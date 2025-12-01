@@ -26,9 +26,20 @@ export default function createServer({
 		version: "1.0.0",
 	})
 
+	// Check if AXYS_API_HOST is a valid URL, otherwise use default
+	let apiHost = DEFAULT_API_HOST
+	try {
+		const url = new URL(config.AXYS_API_HOST)
+		if (url.protocol === 'http:' || url.protocol === 'https:') {
+			apiHost = config.AXYS_API_HOST
+		}
+	} catch {
+		// Invalid URL, use default
+	}
+
 	// Initialize MCP client with config
 	const mcpClient = new GptMcpClient({
-		host: config.AXYS_API_HOST || DEFAULT_API_HOST,
+		host: apiHost,
 		mcpKey: config.MCP_KEY
 	})
 
