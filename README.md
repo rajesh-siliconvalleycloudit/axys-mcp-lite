@@ -56,6 +56,7 @@ Add this configuration to your Claude Desktop config file:
       "command": "npx",
       "args": ["-y", "axys-mcp-lite"],
       "env": {
+        "AXYS_API_HOST": "https://your-axys-host.com",
         "MCP_KEY": "your-mcp-key-here"
       }
     }
@@ -120,6 +121,7 @@ Create a `.env` file in your project directory:
 
 ```env
 # Required
+AXYS_API_HOST=https://your-axys-host.com
 MCP_KEY=your-mcp-key-here
 
 # Optional: Logging configuration
@@ -162,6 +164,7 @@ axys-mcp-lite/
 ## Troubleshooting
 
 ### Connection Issues
+- Verify `AXYS_API_HOST` URL is correct
 - Check MCP_KEY is valid and active
 - Ensure network connectivity to the API server
 

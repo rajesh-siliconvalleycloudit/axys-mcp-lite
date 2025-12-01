@@ -3,8 +3,13 @@ startCommand:
   configSchema:
     type: object
     required:
+      - AXYS_API_HOST
       - MCP_KEY
     properties:
+      AXYS_API_HOST:
+        type: string
+        title: "AXYS API Host"
+        description: "Base URL of the AXYS API"
       MCP_KEY:
         type: string
         title: "MCP Key"
