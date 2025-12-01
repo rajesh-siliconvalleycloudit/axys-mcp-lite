@@ -8,9 +8,6 @@ const DEFAULT_API_HOST = 'https://directory.axys.ai'
 
 // Export configSchema for Smithery to discover
 export const configSchema = z.object({
-	AXYS_API_HOST: z.string()
-		.url()
-		.describe("AXYS API host URL (eg:- https://directory.axys.ai)"),
 	MCP_KEY: z.string()
 		.min(1)
 		.describe("MCP API key for authentication (obtain from AXYS admin)")
@@ -26,20 +23,9 @@ export default function createServer({
 		version: "1.0.0",
 	})
 
-	// Check if AXYS_API_HOST is a valid URL, otherwise use default
-	let apiHost = DEFAULT_API_HOST
-	try {
-		const url = new URL(config.AXYS_API_HOST)
-		if (url.protocol === 'http:' || url.protocol === 'https:') {
-			apiHost = config.AXYS_API_HOST
-		}
-	} catch {
-		// Invalid URL, use default
-	}
-
-	// Initialize MCP client with config
+	// Initialize MCP client with static API host and config MCP_KEY
 	const mcpClient = new GptMcpClient({
-		host: apiHost,
+		host: DEFAULT_API_HOST,
 		mcpKey: config.MCP_KEY
 	})
 
